@@ -1,0 +1,113 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  # Rebuild an existing tag by hand (Actions > Release > Run workflow).
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing tag to release, e.g. v0.1.0
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  validate:
+    name: Validate CHANGELOG.md
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      tag: ${{ steps.tag.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+
+      - id: tag
+        run: echo "tag=${{ inputs.tag || github.ref_name }}" >> "$GITHUB_OUTPUT"
+
+      # Gate everything on the notes: a release without a changelog section
+      # fails here, before anything is built or uploaded.
+      - uses: Londopy/patchnotes@v2.6.0
+        with:
+          file: CHANGELOG.md
+          strict: "true"
+          check-version: ${{ steps.tag.outputs.tag }}
+
+  release:
+    name: Build and publish
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      TAG: ${{ needs.validate.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.validate.outputs.tag }}
+          # git describe needs the earlier tags for the compare link
+          fetch-depth: 0
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - run: go test ./...
+
+      - name: Build archives
+        run: |
+          set -euo pipefail
+          mkdir -p build dist
+          # Pure Go with no cgo, so every target cross-compiles from this one
+          # runner. linux/arm/7 is the 32-bit Raspberry Pi OS build.
+          for target in windows/amd64 windows/arm64 linux/amd64 linux/arm64 linux/arm/7 darwin/amd64 darwin/arm64; do
+            IFS=/ read -r goos goarch goarm <<< "$target"
+            name="b2trace-$TAG-$goos-$goarch${goarm:+v$goarm}"
+            exe=b2trace
+            if [ "$goos" = windows ]; then exe=b2trace.exe; fi
+            mkdir -p "build/$name"
+            CGO_ENABLED=0 GOOS=$goos GOARCH=$goarch GOARM=$goarm \
+              go build -trimpath -ldflags "-s -w -X main.version=$TAG" -o "build/$name/$exe" .
+            cp README.md LICENSE CHANGELOG.md "build/$name/"
+            if [ "$goos" = windows ]; then
+              (cd build && zip -qr "../dist/$name.zip" "$name")
+            else
+              tar -C build -czf "dist/$name.tar.gz" "$name"
+            fi
+          done
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Release notes, checksums and torrents
+        id: notes
+        run: |
+          set -euo pipefail
+          pip install segno==1.6.6
+          prev=$(git describe --tags --abbrev=0 "$TAG^" 2>/dev/null || true)
+          python scripts/release_notes.py "$TAG" dist ${prev:+--prev "$prev"} --out body.md
+          echo "title=$(cat title.txt)" >> "$GITHUB_OUTPUT"
+
+      # Created as a draft and published once every file is up, so nobody
+      # downloads from a half-uploaded release.
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.TAG }}
+          name: ${{ steps.notes.outputs.title }}
+          body_path: body.md
+          files: dist/*
+          draft: true
+          prerelease: ${{ contains(env.TAG, '-') }}
+
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [[ "$TAG" == *-* ]]; then
+            gh release edit "$TAG" --draft=false
+          else
+            gh release edit "$TAG" --draft=false --latest
+          fi
