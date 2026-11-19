@@ -1,0 +1,20 @@
+# Go
+/b2trace
+*.exe
+*.test
+*.out
+
+# Sessions the proxy recorded here (callsigns and message titles)
+/sessions.jsonl
+
+# OS and editors
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/
+*.swp
+
+# Secrets
+.env
+*.key
