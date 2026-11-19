@@ -11,6 +11,7 @@ const usage = `b2trace measures where airtime goes in Winlink B2F sessions.
 
 Usage:
   b2trace proxy --modem vara|ardop --target host:port [--listen host:port] [--log sessions.jsonl]
+  b2trace summary sessions.jsonl
 
 Run "b2trace <command> -h" for the flags of a command.
 `
@@ -24,6 +25,8 @@ func main() {
 	switch cmd, args := os.Args[1], os.Args[2:]; cmd {
 	case "proxy":
 		err = runProxy(args)
+	case "summary":
+		err = runSummary(args, os.Stdout)
 	case "help", "-h", "--help":
 		fmt.Print(usage)
 	default:
