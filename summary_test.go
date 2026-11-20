@@ -6,7 +6,7 @@ import (
 )
 
 // The numbers below are worked out by hand from testdata/sessions.jsonl.
-const wantSummary = `session 1: vara (varahf), 2026-11-19 18:02:11, 3m10.4s, local N0CALL, remote LA1B, ended: disconnected
+const wantSummary = `session 1: vara (varahf), 2026-11-19 18:02:11, 3m10.4s, local N0CALL, remote N0GATE, ended: disconnected
 sid out [PAT-0.17.0-B2FHM$]
 sid in  [WL2K-5.0-B2FWIHJM$]
 
@@ -41,7 +41,7 @@ proposals in      0
 messages          1 out, 0 in
 errors            0
 
-session 2: ardop, 2026-11-19 19:00:00, 45.5s, remote W1AW, ended: data connection closed
+session 2: ardop, 2026-11-19 19:00:00, 45.5s, remote N0RMTE, ended: data connection closed
 
 bytes              out        in      both   share
 handshake           90       120       210   26.8%

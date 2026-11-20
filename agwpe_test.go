@@ -30,8 +30,8 @@ func agwCount(n uint32) []byte { return binary.LittleEndian.AppendUint32(nil, n)
 func TestAGWSplitter(t *testing.T) {
 	stream := concat(
 		agwBytes('X', "N0CALL", "", nil),
-		agwBytes('D', "LA1B", "N0CALL", []byte("FS +\r")),
-		agwBytes('Y', "LA1B", "N0CALL", agwCount(3)),
+		agwBytes('D', "N0GATE", "N0CALL", []byte("FS +\r")),
+		agwBytes('Y', "N0GATE", "N0CALL", agwCount(3)),
 	)
 	for _, size := range []int{1, 7, 36, 41, len(stream)} {
 		var s agwSplitter
@@ -51,7 +51,7 @@ func TestAGWSplitter(t *testing.T) {
 			}
 			b = b[n:]
 		}
-		want := []string{"X 0 N0CALL -", "data FS +\r", "Y 0 LA1B N0CALL 3"}
+		want := []string{"X 0 N0CALL -", "data FS +\r", "Y 0 N0GATE N0CALL 3"}
 		if !reflect.DeepEqual(got, want) {
 			t.Errorf("reads of %d bytes: got %q, want %q", size, got, want)
 		}
@@ -63,7 +63,7 @@ func TestAGWSplitter(t *testing.T) {
 func TestAGWSplitterNotAGWPE(t *testing.T) {
 	var s agwSplitter
 	good := agwBytes('X', "N0CALL", "", nil)
-	bad := agwBytes('D', "N0CALL", "LA1B", nil)
+	bad := agwBytes('D', "N0CALL", "N0GATE", nil)
 	binary.LittleEndian.PutUint32(bad[28:32], 0xffffffff)
 	frames, err := s.write(concat(good, bad))
 	if len(frames) != 1 || err == nil {
@@ -125,11 +125,11 @@ func TestProxyAGWPE(t *testing.T) {
 
 	pat := dialPeer(t, ln.Addr().String())
 	modem := acceptPeer(t, tnc)
-	out := func(kind byte, data []byte) { relay(pat, modem, agwBytes(kind, "N0CALL", "LA1B", data)) }
-	in := func(kind byte, data []byte) { relay(modem, pat, agwBytes(kind, "LA1B", "N0CALL", data)) }
+	out := func(kind byte, data []byte) { relay(pat, modem, agwBytes(kind, "N0CALL", "N0GATE", data)) }
+	in := func(kind byte, data []byte) { relay(modem, pat, agwBytes(kind, "N0GATE", "N0CALL", data)) }
 
-	cmsHello := "[WL2K-5.0-B2FWIHJM$]\rCMS via LA1B >\r"
-	patHello := "[PAT-0.17.0-B2FHMZ$]\r; LA1B DE N0CALL (JO59JS)\r"
+	cmsHello := "[WL2K-5.0-B2FWIHJM$]\rCMS via N0GATE >\r"
+	patHello := "[PAT-0.17.0-B2FHMZ$]\r; N0GATE DE N0CALL (JO59JS)\r"
 	proposals := proposalBlock("FC EM WX7Q2LZPK9HD 300 120 0")
 	msg := transfer("Hello", 0, bytes.Repeat([]byte("ab\r\x01"), 30), 125)
 
@@ -137,7 +137,7 @@ func TestProxyAGWPE(t *testing.T) {
 	relay(modem, pat, agwBytes('X', "N0CALL", "", []byte{1}))
 	out('C', nil)
 	time.Sleep(20 * time.Millisecond)
-	in('C', []byte("*** CONNECTED With Station LA1B\r\x00"))
+	in('C', []byte("*** CONNECTED With Station N0GATE\r\x00"))
 	in('D', []byte(cmsHello))
 	out('D', []byte(patHello+"FF\r"))
 	for _, n := range []uint32{2, 2, 2, 0} {
@@ -147,11 +147,11 @@ func TestProxyAGWPE(t *testing.T) {
 	in('D', []byte(proposals))
 	out('D', []byte("FS +\r"))
 	// one data frame split across two TCP writes
-	frame := agwBytes('D', "LA1B", "N0CALL", msg)
+	frame := agwBytes('D', "N0GATE", "N0CALL", msg)
 	relay(modem, pat, frame[:20])
 	relay(modem, pat, frame[20:])
 	out('D', []byte("FQ\r"))
-	in('d', []byte("*** DISCONNECTED From Station LA1B\r\x00"))
+	in('d', []byte("*** DISCONNECTED From Station N0GATE\r\x00"))
 
 	waitForLines(t, logPath, 1)
 	stop()
@@ -167,8 +167,8 @@ func TestProxyAGWPE(t *testing.T) {
 	if s.Modem != "agwpe" || s.Link != "packet1200" || s.EndReason != "disconnected" {
 		t.Errorf("modem %q, link %q, end reason %q", s.Modem, s.Link, s.EndReason)
 	}
-	if s.LocalCall != "N0CALL" || s.RemoteCall != "LA1B" {
-		t.Errorf("local %q remote %q, want N0CALL and LA1B", s.LocalCall, s.RemoteCall)
+	if s.LocalCall != "N0CALL" || s.RemoteCall != "N0GATE" {
+		t.Errorf("local %q remote %q, want N0CALL and N0GATE", s.LocalCall, s.RemoteCall)
 	}
 	if s.ConnectMs < 20 {
 		t.Errorf("connect_ms %d, want at least 20", s.ConnectMs)
@@ -199,9 +199,9 @@ func TestProxyAGWPE(t *testing.T) {
 	want := []string{
 		"X 0 N0CALL -",
 		"X 0 N0CALL - (data length 1)",
-		"C 0 N0CALL LA1B",
-		"C 0 LA1B N0CALL *** CONNECTED With Station LA1B",
-		"d 0 LA1B N0CALL *** DISCONNECTED From Station LA1B",
+		"C 0 N0CALL N0GATE",
+		"C 0 N0GATE N0CALL *** CONNECTED With Station N0GATE",
+		"d 0 N0GATE N0CALL *** DISCONNECTED From Station N0GATE",
 	}
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("commands %q, want %q", got, want)

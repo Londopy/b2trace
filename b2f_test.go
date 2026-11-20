@@ -86,7 +86,7 @@ func b2Message(mid, subject string, words int) string {
 		"From: N0CALL\r\n" +
 		"Mbo: N0CALL\r\n" +
 		"Subject: " + subject + "\r\n" +
-		"To: LA1B\r\n" +
+		"To: N0TEST\r\n" +
 		"Type: Private\r\n\r\n" + body.String()
 }
 
@@ -152,8 +152,8 @@ func TestParserSession(t *testing.T) {
 	cmsData := compressed(t, b2Message("WX7Q2LZPK9HD", "Field day plans", 600))
 	const resumeAt = 200
 
-	cmsHello := "[WL2K-5.0-B2FWIHJM$]\r;PQ: 61245892\rFairbanks AK gateway\rCMS via LA1B >\r"
-	patHello := ";FW: N0CALL\r[PAT-0.16.0-B2FHM$]\r;PR: 27315468\r; LA1B DE N0CALL (JO59JS)\r"
+	cmsHello := "[WL2K-5.0-B2FWIHJM$]\r;PQ: 61245892\rFairbanks AK gateway\rCMS via N0GATE >\r"
+	patHello := ";FW: N0CALL\r[PAT-0.16.0-B2FHM$]\r;PR: 27315468\r; N0GATE DE N0CALL (JO59JS)\r"
 	patProposal := fmt.Sprintf("FC EM 4HQ8TW3BTMBE %d %d 0", 1500, len(patData))
 	patProposals := proposalBlock(patProposal)
 	patTransfer := transfer(mime.QEncoding.Encode("utf-8", patTitle), 0, patData, 125)
@@ -183,7 +183,7 @@ func TestParserSession(t *testing.T) {
 			End:       int64(len("FF\r")),
 		},
 		lines: []string{
-			"0 ;FW: N0CALL", "0 [PAT-0.16.0-B2FHM$]", "0 ;PR: 27315468", "0 ; LA1B DE N0CALL (JO59JS)",
+			"0 ;FW: N0CALL", "0 [PAT-0.16.0-B2FHM$]", "0 ;PR: 27315468", "0 ; N0GATE DE N0CALL (JO59JS)",
 			"2 " + patProposal, "2 " + strings.Split(patProposals, "\r")[1],
 			"3 FS !200", "5 FF",
 		},
@@ -200,7 +200,7 @@ func TestParserSession(t *testing.T) {
 			End:       int64(len("FQ\r")),
 		},
 		lines: []string{
-			"0 [WL2K-5.0-B2FWIHJM$]", "0 ;PQ: 61245892", "0 Fairbanks AK gateway", "0 CMS via LA1B >",
+			"0 [WL2K-5.0-B2FWIHJM$]", "0 ;PQ: 61245892", "0 Fairbanks AK gateway", "0 CMS via N0GATE >",
 			"3 FS +", "1 " + strings.TrimSuffix(pm, "\r"), "2 " + cmsProposal,
 			"2 " + strings.Split(cmsProposals, "\r")[1], "7 ;WARNING: gateway restarts at 0300z", "5 FQ",
 		},

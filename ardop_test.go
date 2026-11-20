@@ -23,9 +23,9 @@ func TestFrameSplitterFromTNC(t *testing.T) {
 	big := bytes.Repeat([]byte{0x02, 0x00, 0x7d}, 100)
 	stream := bytes.Join([][]byte{
 		tncFrame("ARQ", []byte("FS +\r")),
-		tncFrame("IDF", []byte(" LA1B:[JP20QE] ")),
+		tncFrame("IDF", []byte(" N0GATE:[JP20QE] ")),
 		tncFrame("ARQ", big),
-		tncFrame("FEC", []byte("CQ CQ de LA1B")),
+		tncFrame("FEC", []byte("CQ CQ de N0GATE")),
 		tncFrame("ARQ", []byte("FQ\r")),
 	}, nil)
 	want := append(append([]byte("FS +\r"), big...), "FQ\r"...)

@@ -18,18 +18,18 @@ func TestShareStrips(t *testing.T) {
 		Link:        "varahf",
 		Start:       at,
 		End:         at.Add(time.Minute),
-		ConnectLine: "CONNECTED N0CALL LA1B 2300",
+		ConnectLine: "CONNECTED N0CALL N0GATE 2300",
 		LocalCall:   "N0CALL",
-		RemoteCall:  "LA1B",
+		RemoteCall:  "N0GATE",
 		SIDIn:       "[WL2K-5.0-B2FWIHJM$]",
 		Commands: []commandLine{
 			{T: at, Line: "MYCALL N0CALL N0CALL-10"},
 			{T: at, Line: "GRIDSQUARE JO59JS"},
-			{T: at, Line: "CONNECT N0CALL LA1B"},
+			{T: at, Line: "CONNECT N0CALL N0GATE"},
 			{T: at, Line: "PTT ON"},
-			{T: at, Line: "C 0 LA1B N0CALL *** CONNECTED With Station LA1B"},
+			{T: at, Line: "C 0 N0GATE N0CALL *** CONNECTED With Station N0GATE"},
 		},
-		States:    []stateLine{{T: at, Line: "STATUS CONNECT TO LA1B FAILED!"}},
+		States:    []stateLine{{T: at, Line: "STATUS CONNECT TO N0GATE FAILED!"}},
 		Proposals: []proposal{{Dir: inbound, Code: "FC", MID: "WX7Q2LZPK9HD", Size: 300, CompressedSize: 120, Answer: "accept"}},
 		Messages:  []message{{Dir: inbound, Title: "Meet at 6 by the tower", CompressedSize: 120, Complete: true}},
 		Errors: []streamError{
@@ -50,7 +50,7 @@ func TestShareStrips(t *testing.T) {
 	if err := runShare([]string{in}, &out); err != nil {
 		t.Fatal(err)
 	}
-	for _, secret := range []string{"N0CALL", "n0call", "LA1B", "JO59JS", "WX7Q2LZPK9HD", "tower", "88.90", "example.com"} {
+	for _, secret := range []string{"N0CALL", "n0call", "N0GATE", "JO59JS", "WX7Q2LZPK9HD", "tower", "88.90", "example.com"} {
 		if strings.Contains(out.String(), secret) {
 			t.Errorf("shared output still has %q:\n%s", secret, out.String())
 		}

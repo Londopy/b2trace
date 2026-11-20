@@ -34,8 +34,8 @@ func TestTrackerCommandsAcrossSessions(t *testing.T) {
 	modem := func(l string) { tr.command(0, inbound, l) }
 
 	host("MYCALL N0CALL")
-	host("CONNECT N0CALL LA1B")
-	modem("CONNECTED N0CALL LA1B 2300")
+	host("CONNECT N0CALL N0GATE")
+	modem("CONNECTED N0CALL N0GATE 2300")
 	modem("PTT ON")
 	modem("BUFFER 10")
 	modem("PTT OFF")
@@ -47,11 +47,11 @@ func TestTrackerCommandsAcrossSessions(t *testing.T) {
 	time.Sleep(200 * time.Millisecond)
 
 	// a dial that fails, then a call the remote starts
-	host("CONNECT N0CALL LA2C")
+	host("CONNECT N0CALL N0RMTB")
 	time.Sleep(20 * time.Millisecond)
 	modem("DISCONNECTED")
 	host("LISTEN ON")
-	modem("CONNECTED LA3D N0CALL 2300")
+	modem("CONNECTED N0RMTC N0CALL 2300")
 	modem("DISCONNECTED")
 	time.Sleep(200 * time.Millisecond)
 
@@ -59,27 +59,27 @@ func TestTrackerCommandsAcrossSessions(t *testing.T) {
 	for range 60 {
 		host("LISTEN ON")
 	}
-	modem("CONNECTED LA4E N0CALL 2300")
+	modem("CONNECTED N0RMTD N0CALL 2300")
 	tr.stop()
 
 	if len(*got) != 3 {
 		t.Fatalf("%d sessions, want 3", len(*got))
 	}
 	s1, s2, s3 := (*got)[0], (*got)[1], (*got)[2]
-	want1 := []string{"MYCALL N0CALL", "CONNECT N0CALL LA1B", "CONNECTED N0CALL LA1B 2300", "PTT ON", "PTT OFF", "DISCONNECTED", "OK"}
+	want1 := []string{"MYCALL N0CALL", "CONNECT N0CALL N0GATE", "CONNECTED N0CALL N0GATE 2300", "PTT ON", "PTT OFF", "DISCONNECTED", "OK"}
 	if l := commandLines(s1); !reflect.DeepEqual(l, want1) {
 		t.Errorf("session 1 commands %q, want %q", l, want1)
 	}
-	want2 := []string{"BW2300", "CONNECT N0CALL LA2C", "DISCONNECTED", "LISTEN ON", "CONNECTED LA3D N0CALL 2300", "DISCONNECTED"}
+	want2 := []string{"BW2300", "CONNECT N0CALL N0RMTB", "DISCONNECTED", "LISTEN ON", "CONNECTED N0RMTC N0CALL 2300", "DISCONNECTED"}
 	if l := commandLines(s2); !reflect.DeepEqual(l, want2) {
 		t.Errorf("session 2 commands %q, want %q", l, want2)
 	}
-	if s2.ConnectMs != 0 || s2.LocalCall != "N0CALL" || s2.RemoteCall != "LA3D" {
+	if s2.ConnectMs != 0 || s2.LocalCall != "N0CALL" || s2.RemoteCall != "N0RMTC" {
 		t.Errorf("session 2: connect_ms %d (the failed dial must not count), local %q, remote %q",
 			s2.ConnectMs, s2.LocalCall, s2.RemoteCall)
 	}
 	l := commandLines(s3)
-	if len(l) != 51 || l[0] != "LISTEN ON" || l[50] != "CONNECTED LA4E N0CALL 2300" {
+	if len(l) != 51 || l[0] != "LISTEN ON" || l[50] != "CONNECTED N0RMTD N0CALL 2300" {
 		t.Errorf("session 3 has %d commands, want 50 carried over and CONNECTED", len(l))
 	}
 }
@@ -91,16 +91,16 @@ func TestTrackerAGWPEOtherClient(t *testing.T) {
 	const pat, aprs = 1, 2
 	tr.command(aprs, outbound, "X 0 N0APRS-9 -")
 	tr.command(pat, outbound, "X 0 N0CALL -")
-	tr.command(pat, outbound, "v 0 N0CALL LA1B (data length 11)")
+	tr.command(pat, outbound, "v 0 N0CALL N0GATE (data length 11)")
 	time.Sleep(20 * time.Millisecond)
-	tr.command(pat, inbound, "C 0 LA1B N0CALL *** CONNECTED With Station LA1B")
+	tr.command(pat, inbound, "C 0 N0GATE N0CALL *** CONNECTED With Station N0GATE")
 	sid := "[WL2K-5.0-B2FWIHJM$]\r"
 	tr.data(pat, inbound, []byte(sid))
-	tr.command(aprs, inbound, "U 0 W1XYZ APRS (data length 5)")
+	tr.command(aprs, inbound, "U 0 N0DIGI APRS (data length 5)")
 	tr.data(aprs, inbound, []byte("not B2F\r"))
 	tr.connClosed(aprs, "API connection")
 	tr.data(pat, outbound, []byte("FF\r"))
-	tr.command(pat, inbound, "d 0 LA1B N0CALL *** DISCONNECTED From Station LA1B")
+	tr.command(pat, inbound, "d 0 N0GATE N0CALL *** DISCONNECTED From Station N0GATE")
 	tr.stop()
 
 	if len(*got) != 1 {
@@ -111,7 +111,7 @@ func TestTrackerAGWPEOtherClient(t *testing.T) {
 		t.Errorf("end %q, bytes in %d, end out %d; want disconnected, %d, 3", s.EndReason, s.BytesIn.total(), s.BytesOut.End, len(sid))
 	}
 	for _, l := range commandLines(s) {
-		if strings.Contains(l, "N0APRS") || strings.Contains(l, "W1XYZ") {
+		if strings.Contains(l, "N0APRS") || strings.Contains(l, "N0DIGI") {
 			t.Errorf("the other client's frame %q is in Pat's session", l)
 		}
 	}
@@ -121,7 +121,7 @@ func TestTrackerAGWPEOtherClient(t *testing.T) {
 }
 
 func TestRecorderAnswersOpenProposals(t *testing.T) {
-	r := newRecorder("vara", time.Now(), "CONNECTED N0CALL LA1B 2300")
+	r := newRecorder("vara", time.Now(), "CONNECTED N0CALL N0GATE 2300")
 	send := func(dir direction, s string) { r.data(dir, time.Now(), []byte(s)) }
 	send(inbound, "FC EM AAAAAAAAAAAA 100 50 0\rFC EM BBBBBBBBBBBB 100 50 0\rF> 00\r")
 	send(outbound, "FS +=\r")
@@ -139,8 +139,8 @@ func TestRecorderAnswersOpenProposals(t *testing.T) {
 
 // A bracketed banner before the SID is not the SID.
 func TestRecorderSIDAfterBanner(t *testing.T) {
-	r := newRecorder("vara", time.Now(), "CONNECTED N0CALL LA1B 2300")
-	r.data(inbound, time.Now(), []byte("[Welcome to the LA1B gateway]\r[WL2K-5.0-B2FWIHJM$]\r"))
+	r := newRecorder("vara", time.Now(), "CONNECTED N0CALL N0GATE 2300")
+	r.data(inbound, time.Now(), []byte("[Welcome to the N0GATE gateway]\r[WL2K-5.0-B2FWIHJM$]\r"))
 	if r.s.SIDIn != "[WL2K-5.0-B2FWIHJM$]" {
 		t.Errorf("sid_in %q", r.s.SIDIn)
 	}

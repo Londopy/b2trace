@@ -114,23 +114,23 @@ func TestProxySession(t *testing.T) {
 	same := func(b []byte) []byte { return b }
 	cases := []modemCase{{
 		modem:     "vara",
-		dial:      "CONNECT N0CALL LA1B",
-		connected: "CONNECTED N0CALL LA1B 2300",
+		dial:      "CONNECT N0CALL N0GATE",
+		connected: "CONNECTED N0CALL N0GATE 2300",
 		pttOn:     "PTT ON",
 		pttOff:    "PTT OFF",
 		toModem:   same,
 		toHost:    same,
 	}, {
 		modem:           "ardop",
-		dial:            "ARQCALL LA1B 5",
-		connected:       "CONNECTED LA1B 500",
+		dial:            "ARQCALL N0GATE 5",
+		connected:       "CONNECTED N0GATE 500",
 		pttOn:           "PTT TRUE",
 		pttOff:          "PTT FALSE",
 		afterConnect:    []string{"NEWSTATE IRS"},
 		afterDisconnect: []string{"NEWSTATE DISC"},
 		toModem:         hostFrame,
 		toHost:          func(b []byte) []byte { return tncFrame("ARQ", b) },
-		noise:           tncFrame("IDF", []byte(" LA1B:[JP20QE] ")),
+		noise:           tncFrame("IDF", []byte(" N0GATE:[JP20QE] ")),
 	}}
 	for _, mc := range cases {
 		t.Run(mc.modem, func(t *testing.T) { testProxySession(t, mc) })
@@ -198,8 +198,8 @@ func testProxySession(t *testing.T, mc modemCase) {
 	sendIn := func(b []byte) { relay(modemData, patData, mc.toHost(b)) }
 	sendOut := func(b []byte) { relay(patData, modemData, mc.toModem(b)) }
 
-	cmsHello := "[WL2K-5.0-B2FWIHJM$]\r;PQ: 61245892\rCMS via LA1B >\r"
-	patHello := ";FW: N0CALL\r[PAT-0.16.0-B2FHM$]\r;PR: 27315468\r; LA1B DE N0CALL (JO59JS)\r"
+	cmsHello := "[WL2K-5.0-B2FWIHJM$]\r;PQ: 61245892\rCMS via N0GATE >\r"
+	patHello := ";FW: N0CALL\r[PAT-0.16.0-B2FHM$]\r;PR: 27315468\r; N0GATE DE N0CALL (JO59JS)\r"
 	pm := ";PM: N0CALL WX7Q2LZPK9HD 300 sender@example.com Hello\r"
 	cmsProposals := proposalBlock("FC EM WX7Q2LZPK9HD 300 120 0")
 	msg := transfer("Hello", 0, bytes.Repeat([]byte("ab\r\x01"), 30), 125)
@@ -259,8 +259,8 @@ func testProxySession(t *testing.T, mc modemCase) {
 	if s.Modem != mc.modem || s.ConnectLine != mc.connected || s.EndReason != "disconnected" {
 		t.Errorf("modem %q, connect line %q, end reason %q", s.Modem, s.ConnectLine, s.EndReason)
 	}
-	if s.LocalCall != "N0CALL" || s.RemoteCall != "LA1B" {
-		t.Errorf("local %q remote %q, want N0CALL and LA1B", s.LocalCall, s.RemoteCall)
+	if s.LocalCall != "N0CALL" || s.RemoteCall != "N0GATE" {
+		t.Errorf("local %q remote %q, want N0CALL and N0GATE", s.LocalCall, s.RemoteCall)
 	}
 	wantIn := phaseBytes{
 		Handshake: int64(len(cmsHello)),
@@ -382,7 +382,7 @@ func TestProxySessionCutShort(t *testing.T) {
 			r := newRig(t, "vara")
 			msg := transfer("Field day plans", 0, bytes.Repeat([]byte{stx, eot, '\r'}, 200), 125)
 			relay(r.patCmd, r.modemCmd, []byte("MYCALL N0CALL\r"))
-			relay(r.modemCmd, r.patCmd, []byte("CONNECTED N0CALL LA1B 2300\r"))
+			relay(r.modemCmd, r.patCmd, []byte("CONNECTED N0CALL N0GATE 2300\r"))
 			relay(r.modemCmd, r.patCmd, []byte("PTT ON\r"))
 			relay(r.patData, r.modemData, []byte("FS +\r"))
 			relay(r.modemData, r.patData, msg[:300])
