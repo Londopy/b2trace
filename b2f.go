@@ -251,3 +251,63 @@ func decodeTitle(raw []byte) string {
 	}
 	return s
 }
+
+// isSID reports whether a handshake line is a SID, like [PAT-0.17.0-B2FHM$].
+// Every SID ends in "$]", which tells it apart from a bracketed banner line.
+func isSID(line string) bool {
+	return strings.HasPrefix(line, "[") && strings.HasSuffix(line, "$]")
+}
+
+// parseProposal reads an FA to FE line. FC, FD and FE carry
+// "type MID size compressed-size flag"; the older FA and FB forms keep
+// only their code. A flag of 1 marks an optimistic send in the Z extension.
+func parseProposal(line string) proposal {
+	f := strings.Fields(line)
+	p := proposal{Code: f[0]}
+	if len(f) < 5 || !strings.ContainsRune("CDE", rune(line[1])) {
+		return p
+	}
+	p.MID = f[2]
+	p.Size, _ = strconv.Atoi(f[3])
+	p.CompressedSize, _ = strconv.Atoi(f[4])
+	p.Optimistic = len(f) > 5 && f[5] == "1"
+	return p
+}
+
+type answer struct {
+	kind   string
+	offset int
+}
+
+// parseAnswers reads an FS line, one answer per proposal: + accept,
+// - reject, = defer, !<offset> accept from that offset, with the letter
+// forms that older clients send. Anything else still takes its proposal's
+// place, as "other".
+func parseAnswers(line string) []answer {
+	s := strings.TrimSpace(strings.TrimPrefix(line, "FS"))
+	var answers []answer
+	for len(s) > 0 {
+		c := s[0]
+		s = s[1:]
+		switch c {
+		case '+', 'Y', 'y':
+			answers = append(answers, answer{kind: "accept"})
+		case '-', 'N', 'n', 'R', 'r':
+			answers = append(answers, answer{kind: "reject"})
+		case '=', 'L', 'l', 'H', 'h':
+			answers = append(answers, answer{kind: "defer"})
+		case '!', 'A', 'a':
+			n := 0
+			for n < len(s) && s[n] >= '0' && s[n] <= '9' {
+				n++
+			}
+			off, _ := strconv.Atoi(s[:n])
+			s = s[n:]
+			answers = append(answers, answer{kind: "resume", offset: off})
+		case ' ':
+		default:
+			answers = append(answers, answer{kind: "other"})
+		}
+	}
+	return answers
+}

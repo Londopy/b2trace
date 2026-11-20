@@ -15,6 +15,7 @@ import (
 type tracker struct {
 	mu    sync.Mutex
 	modem string
+	link  string
 	log   *log.Logger
 	save  func(*session) error
 
@@ -26,41 +27,103 @@ type tracker struct {
 	mycalls []string
 	target  string
 	pttOn   bool
+	dialAt  time.Time
 
 	rec *recorder
+	// The AGWPE connection whose "C" frame started rec. Other programs can
+	// share the TNC, and their frames are not part of the session. Always 0
+	// for VARA and ARDOP.
+	owner int
+	// command lines since the last session, kept for the next one
+	before []pendingLine
 }
 
-func newTracker(modem string, logger *log.Logger, save func(*session) error) *tracker {
-	return &tracker{modem: modem, log: logger, save: save, grace: 2 * time.Second}
+type pendingLine struct {
+	conn int
+	c    commandLine
 }
 
-// command handles one line from the command port.
-func (t *tracker) command(dir direction, line string) {
+func newTracker(modem, link string, logger *log.Logger, save func(*session) error) *tracker {
+	return &tracker{modem: modem, link: link, log: logger, save: save, grace: 2 * time.Second}
+}
+
+// command handles one line from the command port, or one AGWPE frame
+// written out as a line by agwFrame.line. conn tells AGWPE connections
+// apart and is 0 for VARA and ARDOP.
+func (t *tracker) command(conn int, dir direction, line string) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
-	if dir == outbound {
-		t.log.Printf("host  %s", line)
-		t.hostLine(line)
+	now := time.Now()
+	f := strings.Fields(line)
+	buffer := t.isBuffer(f)
+	// Pat polls AGWPE for the frame count several times a second.
+	if !buffer || t.modem != "agwpe" {
+		who := "host "
+		if dir == inbound {
+			who = "modem"
+		}
+		t.log.Printf("%s %s", who, line)
+	}
+	if t.foreign(conn) {
 		return
 	}
-	t.log.Printf("modem %s", line)
-	t.modemLine(time.Now(), line)
+	if dir == outbound {
+		t.hostLine(now, f)
+	} else {
+		t.modemLine(now, conn, line, f)
+	}
+	// After the line is handled, so CONNECTED goes with the session it
+	// starts and DISCONNECTED with the one it ends.
+	if !buffer {
+		t.note(now, conn, dir, line)
+	}
 }
 
-func (t *tracker) data(dir direction, b []byte) {
+// foreign reports whether conn belongs to another program on the same AGWPE
+// TNC while a session is open.
+func (t *tracker) foreign(conn int) bool { return t.rec != nil && conn != t.owner }
+
+// isBuffer reports whether a line is a buffer report or query. Those come
+// often and are kept in the session's buffer samples instead.
+func (t *tracker) isBuffer(f []string) bool {
+	if t.modem == "agwpe" {
+		return f[0] == "Y" || f[0] == "y"
+	}
+	return strings.EqualFold(f[0], "BUFFER")
+}
+
+func (t *tracker) note(now time.Time, conn int, dir direction, line string) {
+	c := commandLine{T: stamp(now), Dir: dir, Line: line}
+	// Once the session has ended, what the host sends is for the next one.
+	if t.rec != nil && !(t.rec.ended && dir == outbound) {
+		t.rec.s.Commands = append(t.rec.s.Commands, c)
+		return
+	}
+	t.before = append(t.before, pendingLine{conn, c})
+	// enough for the setup and the connect attempts before a session
+	if len(t.before) > 50 {
+		t.before = t.before[len(t.before)-50:]
+	}
+}
+
+func (t *tracker) data(conn int, dir direction, b []byte) {
 	if len(b) == 0 {
 		return
 	}
 	t.mu.Lock()
 	defer t.mu.Unlock()
-	if t.rec != nil {
+	if t.rec != nil && !t.foreign(conn) {
 		t.rec.data(dir, time.Now(), b)
 	}
 }
 
-func (t *tracker) connClosed(what string) {
+func (t *tracker) connClosed(conn int, what string) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
+	t.before = slices.DeleteFunc(t.before, func(l pendingLine) bool { return l.conn == conn && conn != 0 })
+	if t.foreign(conn) {
+		return
+	}
 	t.end(time.Now(), what+" closed")
 }
 
@@ -70,15 +133,37 @@ func (t *tracker) stop() {
 	t.end(time.Now(), "proxy stopped")
 }
 
-func (t *tracker) hostLine(line string) {
-	f := strings.Fields(line)
-	if len(f) > 1 && strings.EqualFold(f[0], "MYCALL") {
+func (t *tracker) hostLine(now time.Time, f []string) {
+	if t.modem == "agwpe" {
+		switch f[0] {
+		case "X":
+			if len(f) > 2 && !t.isMine(f[2]) {
+				t.mycalls = append(t.mycalls, f[2])
+			}
+		case "C", "v":
+			t.dialAt = now
+		case "d":
+			t.dialAt = time.Time{}
+		}
+		return
+	}
+	switch strings.ToUpper(f[0]) {
+	case "MYCALL":
 		t.mycalls = f[1:]
+	case "CONNECT", "ARQCALL":
+		t.dialAt = now
+	// a dial given up on, which a TNC may never answer
+	case "DISCONNECT", "ABORT":
+		t.dialAt = time.Time{}
 	}
 }
 
-func (t *tracker) modemLine(now time.Time, line string) {
-	f := strings.Fields(strings.ToUpper(line))
+func (t *tracker) modemLine(now time.Time, conn int, line string, f []string) {
+	if t.modem == "agwpe" {
+		t.agwLine(now, conn, line, f)
+		return
+	}
+	f = strings.Fields(strings.ToUpper(line))
 	switch f[0] {
 	case "PTT":
 		if len(f) > 1 {
@@ -90,9 +175,11 @@ func (t *tracker) modemLine(now time.Time, line string) {
 			}
 		}
 	case "BUFFER":
-		t.buffer(now, f)
+		if len(f) > 1 {
+			t.buffer(now, f[1])
+		}
 	case "CONNECTED":
-		t.connected(now, line, f)
+		t.connected(now, 0, line, f)
 	case "DISCONNECTED":
 		t.disconnected(now)
 	case "NEWSTATE", "STATUS":
@@ -132,22 +219,55 @@ func (t *tracker) ptt(now time.Time, on bool) {
 	}
 }
 
-func (t *tracker) buffer(now time.Time, f []string) {
+// agwLine handles an AGWPE frame from the TNC: "C" is a connection, "d"
+// its end, "Y" the frames still waiting to be acknowledged on it.
+func (t *tracker) agwLine(now time.Time, conn int, line string, f []string) {
+	switch f[0] {
+	case "C":
+		if len(f) > 3 {
+			t.connected(now, conn, line, []string{"C", strings.ToUpper(f[2]), strings.ToUpper(f[3])})
+		}
+	case "d":
+		t.disconnected(now)
+	case "Y":
+		if len(f) > 4 {
+			t.buffer(now, f[4])
+		}
+	}
+}
+
+func (t *tracker) buffer(now time.Time, value string) {
 	r := t.active()
-	if r == nil || len(f) < 2 {
+	if r == nil {
 		return
 	}
-	n, err := strconv.Atoi(f[1])
+	n, err := strconv.Atoi(value)
 	if err != nil {
+		return
+	}
+	// polled, so only the changes say anything
+	if b := r.s.Buffer; t.modem == "agwpe" && len(b) > 0 && b[len(b)-1].Bytes == n {
 		return
 	}
 	r.s.Buffer = append(r.s.Buffer, bufferSample{T: stamp(now), Bytes: n})
 }
 
-func (t *tracker) connected(now time.Time, line string, f []string) {
+func (t *tracker) connected(now time.Time, conn int, line string, f []string) {
 	t.end(now, "new CONNECTED")
+	t.owner = conn
 	r := newRecorder(t.modem, now, line)
+	r.s.Link = t.link
 	r.s.LocalCall, r.s.RemoteCall = t.calls(f)
+	if !t.dialAt.IsZero() {
+		r.s.ConnectMs = now.Sub(t.dialAt).Milliseconds()
+		t.dialAt = time.Time{}
+	}
+	for _, l := range t.before {
+		if l.conn == conn {
+			r.s.Commands = append(r.s.Commands, l.c)
+		}
+	}
+	t.before = nil
 	if t.pttOn {
 		r.txOn(now)
 	}
@@ -186,6 +306,8 @@ func (t *tracker) isMine(call string) bool {
 }
 
 func (t *tracker) disconnected(now time.Time) {
+	// a failed connect attempt ends here too
+	t.dialAt = time.Time{}
 	r := t.active()
 	if r == nil {
 		return
@@ -229,6 +351,8 @@ func (t *tracker) finish() {
 type recorder struct {
 	s       session
 	parsers [2]parser
+	// proposals sent each way that the other side has not answered yet
+	waiting [2][]int
 	txStart time.Time
 	lastOff time.Time
 
@@ -238,7 +362,7 @@ type recorder struct {
 }
 
 func newRecorder(modem string, now time.Time, line string) *recorder {
-	return &recorder{s: session{
+	r := &recorder{s: session{
 		Modem:       modem,
 		Start:       stamp(now),
 		ConnectLine: line,
@@ -247,9 +371,15 @@ func newRecorder(modem string, now time.Time, line string) *recorder {
 		GapMs:       []int64{},
 		Buffer:      []bufferSample{},
 		States:      []stateLine{},
+		Commands:    []commandLine{},
+		Proposals:   []proposal{},
 		Messages:    []message{},
 		Errors:      []streamError{},
 	}}
+	if modem == "agwpe" {
+		r.s.BufferUnit = "frames"
+	}
+	return r
 }
 
 func (r *recorder) data(dir direction, now time.Time, b []byte) {
@@ -277,6 +407,36 @@ func (r *recorder) add(dir direction, tn *turn, now time.Time, els []element) {
 		if e.err != "" {
 			r.s.Errors = append(r.s.Errors, streamError{T: stamp(now), Dir: dir, Text: e.err})
 		}
+		r.line(dir, e)
+	}
+}
+
+// line keeps the SIDs, the proposals and the answers to them.
+func (r *recorder) line(dir direction, e element) {
+	switch {
+	case e.phase == phaseHandshake && isSID(e.line):
+		sid := &r.s.SIDOut
+		if dir == inbound {
+			sid = &r.s.SIDIn
+		}
+		if *sid == "" {
+			*sid = e.line
+		}
+	case e.phase == phaseProposals && e.line[1] != '>':
+		p := parseProposal(e.line)
+		p.Dir = dir
+		r.waiting[dir] = append(r.waiting[dir], len(r.s.Proposals))
+		r.s.Proposals = append(r.s.Proposals, p)
+	case e.phase == phaseAnswer:
+		other := 1 - dir
+		for i, a := range parseAnswers(e.line) {
+			if i >= len(r.waiting[other]) {
+				break
+			}
+			p := &r.s.Proposals[r.waiting[other][i]]
+			p.Answer, p.Offset = a.kind, a.offset
+		}
+		r.waiting[other] = nil
 	}
 }
 

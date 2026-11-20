@@ -100,6 +100,7 @@ func waitForLines(t *testing.T, path string, n int) {
 
 type modemCase struct {
 	modem           string
+	dial            string
 	connected       string
 	pttOn, pttOff   string
 	afterConnect    []string
@@ -113,6 +114,7 @@ func TestProxySession(t *testing.T) {
 	same := func(b []byte) []byte { return b }
 	cases := []modemCase{{
 		modem:     "vara",
+		dial:      "CONNECT N0CALL LA1B",
 		connected: "CONNECTED N0CALL LA1B 2300",
 		pttOn:     "PTT ON",
 		pttOff:    "PTT OFF",
@@ -120,6 +122,7 @@ func TestProxySession(t *testing.T) {
 		toHost:    same,
 	}, {
 		modem:           "ardop",
+		dial:            "ARQCALL LA1B 5",
 		connected:       "CONNECTED LA1B 500",
 		pttOn:           "PTT TRUE",
 		pttOff:          "PTT FALSE",
@@ -153,11 +156,11 @@ func newRig(t *testing.T, modem string) *rig {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { f.Close() })
-	p, err := newProxy(modem, modemCmdLn.Addr().String(), log.New(io.Discard, "", 0), appendSession(f))
+	p, err := newProxy(modem, "", modemCmdLn.Addr().String(), log.New(io.Discard, "", 0), appendSession(f))
 	if err != nil {
 		t.Fatal(err)
 	}
-	p.tr.grace = 50 * time.Millisecond
+	p.tr.grace = 500 * time.Millisecond
 	ctx, cancel := context.WithCancel(context.Background())
 	served := make(chan error, 1)
 	go func() { served <- p.serve(ctx, proxyCmdLn, proxyDataLn) }()
@@ -202,6 +205,8 @@ func testProxySession(t *testing.T, mc modemCase) {
 	msg := transfer("Hello", 0, bytes.Repeat([]byte("ab\r\x01"), 30), 125)
 
 	relay(patCmd, modemCmd, []byte("MYCALL N0CALL\r"))
+	relay(patCmd, modemCmd, []byte(mc.dial+"\r"))
+	time.Sleep(20 * time.Millisecond)
 	fromModem(mc.connected)
 	for _, l := range mc.afterConnect {
 		fromModem(l)
@@ -326,6 +331,36 @@ func testProxySession(t *testing.T, mc modemCase) {
 	if len(s.Errors) != 0 {
 		t.Errorf("errors %+v", s.Errors)
 	}
+
+	if s.ConnectMs < 20 {
+		t.Errorf("connect_ms %d, want at least the 20 ms between %q and CONNECTED", s.ConnectMs, mc.dial)
+	}
+	if s.SIDOut != "[PAT-0.16.0-B2FHM$]" || s.SIDIn != "[WL2K-5.0-B2FWIHJM$]" {
+		t.Errorf("SIDs out %q in %q", s.SIDOut, s.SIDIn)
+	}
+	wantProps := []proposal{{Dir: inbound, Code: "FC", MID: "WX7Q2LZPK9HD", Size: 300, CompressedSize: 120, Answer: "accept"}}
+	if !reflect.DeepEqual(s.Proposals, wantProps) {
+		t.Errorf("proposals %+v, want %+v", s.Proposals, wantProps)
+	}
+	// every command-port line but the BUFFER reports, from MYCALL on
+	want := []string{"MYCALL N0CALL", mc.dial, mc.connected}
+	want = append(want, mc.afterConnect...)
+	for range 3 {
+		want = append(want, mc.pttOn, mc.pttOff)
+	}
+	want = append(want, "DISCONNECTED")
+	want = append(want, mc.afterDisconnect...)
+	var got []string
+	for i, c := range s.Commands {
+		got = append(got, c.Line)
+		// the first two come from Pat, the rest from the modem
+		if (i < 2) != (c.Dir == outbound) {
+			t.Errorf("command %q has direction %s", c.Line, c.Dir)
+		}
+	}
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("commands %q, want %q", got, want)
+	}
 }
 
 // A link that drops mid-message is common on HF. The session must still be
@@ -406,7 +441,7 @@ func TestProxyModemNotRunning(t *testing.T) {
 	ln.Close()
 
 	var logs syncBuffer
-	p, err := newProxy("vara", addr, log.New(&logs, "", 0), func(*session) error { return nil })
+	p, err := newProxy("vara", "", addr, log.New(&logs, "", 0), func(*session) error { return nil })
 	if err != nil {
 		t.Fatal(err)
 	}

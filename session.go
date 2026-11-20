@@ -98,12 +98,17 @@ func (b phaseBytes) total() int64 {
 // transmission plus turnaround dead time.
 type session struct {
 	Modem       string         `json:"modem"`
+	Link        string         `json:"link,omitempty"`
+	Shared      bool           `json:"shared,omitempty"`
 	Start       time.Time      `json:"start"`
 	End         time.Time      `json:"end"`
 	EndReason   string         `json:"end_reason"`
 	ConnectLine string         `json:"connect_line"`
+	ConnectMs   int64          `json:"connect_ms,omitempty"`
 	LocalCall   string         `json:"local_call,omitempty"`
 	RemoteCall  string         `json:"remote_call,omitempty"`
+	SIDOut      string         `json:"sid_out,omitempty"`
+	SIDIn       string         `json:"sid_in,omitempty"`
 	BytesOut    phaseBytes     `json:"bytes_out"`
 	BytesIn     phaseBytes     `json:"bytes_in"`
 	TurnCount   int            `json:"turn_count"`
@@ -113,7 +118,10 @@ type session struct {
 	PTT         []pttInterval  `json:"ptt"`
 	GapMs       []int64        `json:"gap_ms"`
 	Buffer      []bufferSample `json:"buffer"`
+	BufferUnit  string         `json:"buffer_unit,omitempty"`
 	States      []stateLine    `json:"states"`
+	Commands    []commandLine  `json:"commands"`
+	Proposals   []proposal     `json:"proposals"`
 	Messages    []message      `json:"messages"`
 	Errors      []streamError  `json:"errors"`
 }
@@ -141,6 +149,27 @@ type bufferSample struct {
 type stateLine struct {
 	T    time.Time `json:"t"`
 	Line string    `json:"line"`
+}
+
+// commandLine is one command-port line, or one AGWPE frame other than
+// connected data.
+type commandLine struct {
+	T    time.Time `json:"t"`
+	Dir  direction `json:"dir"`
+	Line string    `json:"line"`
+}
+
+// proposal is one FA to FE line and the answer the other side gave it.
+// Offset is the resume offset of an accepted "!" answer.
+type proposal struct {
+	Dir            direction `json:"dir"`
+	Code           string    `json:"code"`
+	MID            string    `json:"mid,omitempty"`
+	Size           int       `json:"size,omitempty"`
+	CompressedSize int       `json:"compressed_size,omitempty"`
+	Optimistic     bool      `json:"optimistic,omitempty"`
+	Answer         string    `json:"answer,omitempty"`
+	Offset         int       `json:"offset,omitempty"`
 }
 
 // message is one binary transfer. CompressedSize counts the data bytes in
