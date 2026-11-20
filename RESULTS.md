@@ -13,6 +13,9 @@ No sessions have been shared yet.
   for an answer aims to cut that to 4 or 5.
 - **Gap (mean):** from your PTT going off to it coming on again: the remote's transmission
   plus the turnaround dead time. VARA and ARDOP only.
+- **Reply time (mean):** how long the recording station's Pat took to answer each remote
+  turn, from the remote's last byte reaching it to its own next byte. Modem delays and the
+  dead time on the air are not in it.
 - **Connect (median):** from Pat's connect command to CONNECTED, for sessions you started.
 - **Payload share of time:** the estimated share of the session spent moving messages. The
   README explains how the time is split.

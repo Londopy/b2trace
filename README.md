@@ -17,7 +17,7 @@ compressors on Winlink messages.
 A session in `b2trace summary` looks like this (numbers from the test data, not a real link):
 
 ```
-session 1: vara (varahf), 2026-11-19 18:02:11, 3m10.4s, local N0CALL, remote LA1B, ended: disconnected
+session 1: vara (varahf), 2026-11-19 18:02:11, 3m10.4s, local N0CALL, remote N0GATE, ended: disconnected
 sid out [PAT-0.17.0-B2FHM$]
 sid in  [WL2K-5.0-B2FWIHJM$]
 
@@ -46,6 +46,7 @@ PTT intervals     3
 local TX          12.3 s
 gaps              2
 mean gap          2.50 s (estimate: local PTT off to next PTT on)
+reply time        0.67 s (mean, remote's last byte to your next byte)
 possible retries  2 (BUFFER non-zero and unchanged for 2+ samples)
 proposals out     1 (FC 1): 1 accepted
 proposals in      0
@@ -119,6 +120,12 @@ local TX time, gaps or retry hints. Everything else is recorded. Other programs 
 TNC through the proxy, such as an APRS client; their frames are relayed but kept out of the
 session Pat is in.
 
+How far packet support has been tested: against Direwolf 1.8.1, Pat registering, dialing a
+station that did not answer, and Direwolf giving up, all relayed and recorded as expected.
+Full sessions, with messages both ways, have been run with real Pat at both ends but through
+a stand-in TNC that answers the AGWPE frames the way Direwolf does, not through Direwolf
+itself.
+
 If Pat is set to another address, pass that address to `--listen`.
 
 The proxy prints every command with a timestamp (on AGWPE, every frame other than data and
@@ -139,11 +146,16 @@ It takes one log or several. For each session and for all of them together:
 - bytes per phase in each direction and their share of all bytes
 - an estimate of the time per phase (below)
 - turns and turnarounds, local transmit time, and the mean gap between your transmissions
+- the reply time: how long Pat took to answer each remote turn, from the remote's last byte
+  to the first byte of Pat's next turn
 - possible retries: times the modem's BUFFER report stayed the same and non-zero over two or
   more reports
-- the proposals each way by code (FC is LZHUF, FD gzip, FE brotli), and how the other side
-  answered them: accepted, resumed from an offset, deferred, rejected, or not answered before
-  the link dropped
+- the proposals each way by code, and how the other side answered them: accepted, resumed
+  from an offset, deferred, rejected, answered with a letter b2trace does not know, or not
+  answered before the link dropped. b2trace counts the codes without interpreting them. In
+  wl2k-go, which Pat uses, FC is B2 compression (LZHUF) and FD is the gzip experiment Pat
+  offers to peers with a G in their SID. FE is not in any released client: it is the code of
+  a proposed brotli extension, so seeing it means both ends run a build with that extension.
 
 The phases, as b2trace sorts each line or transfer:
 
@@ -198,9 +210,15 @@ level 11, so the reference zstd at `-19` may do a little better.
 For `zstd+dict`, the sorted files are split into two halves by odd and even position. Each half
 is compressed with a dictionary trained on the other half, so no file helps compress itself.
 Files with the same content as another file are left out for the same reason. With too few
-files to train a dictionary, the column is skipped and the reason printed. The dictionary
-builder is not deterministic, so this column can change by a fraction of a percent between
-runs; the other columns always come out the same.
+files to train a dictionary, the column is skipped and the reason printed. The builder stops
+when the samples run out of shared phrases, which can be well under `--dict-size`, so
+`compress` prints the size of each dictionary it trained. It is also not deterministic: this
+column can move by a point or two between runs, more for a single kind of message, while
+the other columns always come out the same.
+
+[COMPRESSION.md](COMPRESSION.md) has the results on a corpus of 74 messages written for this
+repository, in [`corpus/`](corpus/): ICS-213 forms, position reports, radiograms, check-ins,
+spotter reports and hand-written messages.
 
 ### Share your numbers
 
@@ -230,10 +248,14 @@ b2trace sees only your end of the link.
   `local_tx_ms` stays 0 and there are no gaps. AGWPE never sends them.
 - **Exact:** B2F bytes per phase and direction, turns, message sizes, proposals and answers,
   and the modem's commands and BUFFER reports as it sent them.
+- **Exact:** the reply time, how long Pat took to answer each remote turn, from the remote's
+  last byte reaching Pat to Pat's first byte of the next turn. It is Pat's part of a
+  turnaround only: the modem's decoding before it and keying after it are not in it, and the
+  turnaround dead time on the air stays inside the gap.
 - **Estimated:** the remote station's transmit time and the turnaround dead time. b2trace never
   sees the remote's PTT. All it has is `gap_ms`, the time from your PTT going off to it coming
   on again: the remote's transmission plus the dead time on both sides of it. One station
-  cannot split those.
+  cannot split those, so the summary has no separate dead-time figure.
 - **Estimated:** the time per phase. Outgoing bytes can wait in the modem's buffer before they
   go on the air, and incoming bytes show up only after the modem has decoded them, so a turn's
   time as the proxy sees it is shifted from its airtime. Turns that mix phases share their time
@@ -326,6 +348,8 @@ share.go      b2trace share
 results.go    b2trace results
 compress.go   b2trace compress
 testdata/     JSONL input for the summary test
+corpus/       the messages COMPRESSION.md measures
+scripts/      corpus generator, compression tables and release notes
 ```
 
 ## Contributing

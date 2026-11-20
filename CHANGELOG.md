@@ -7,6 +7,27 @@ what appears on its GitHub release page.
 
 ## [Unreleased]
 
+### Added
+
+- The reply time, in `b2trace summary` and the results table: how long Pat took to answer
+  each remote turn, from the remote's last byte to Pat's next one.
+- A corpus of 74 Winlink messages written for this repository, the script that makes it, and
+  [COMPRESSION.md](https://github.com/Londopy/b2trace/blob/main/COMPRESSION.md) with how LZHUF,
+  gzip, brotli and zstd with a trained dictionary compare on it.
+
+### Changed
+
+- `b2trace compress` prints the size of the dictionaries it trained, which can be well under
+  `--dict-size`.
+
+### Fixed
+
+- The README read as if b2trace knew what the proposal codes mean. It now says where FC and FD
+  come from and that FE is only a proposal.
+- The test data uses made-up callsigns, ones that are never issued.
+- The 0.2.0 notes read as if packet had been tested with Direwolf. The README now says how far
+  it has been: real Direwolf for registering and dialing, a stand-in TNC for full sessions.
+
 ## [0.2.0] - 2026-11-19
 
 ### Added
