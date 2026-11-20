@@ -46,9 +46,12 @@ func runCompress(args []string, stdout, stderr io.Writer) error {
 	if err != nil {
 		return err
 	}
-	if sizes, err := dictSizes(files, *dictSize); err != nil {
+	if sizes, dicts, err := dictSizes(files, *dictSize); err != nil {
 		fmt.Fprintf(stderr, "zstd+dict skipped: %v\n", err)
 	} else {
+		// the builder stops when the samples run out of shared phrases, so
+		// this can be well under --dict-size
+		fmt.Fprintf(stderr, "zstd+dict: trained dictionaries of %d and %d bytes\n", dicts[0], dicts[1])
 		r.addColumn("zstd+dict", sizes)
 	}
 
@@ -145,14 +148,14 @@ func measure(names []string, files [][]byte) (*report, error) {
 // dictSizes compresses each file with a zstd dictionary trained on the other
 // half of the files (split by sorted index), so no file is compressed with a
 // dictionary built from itself.
-func dictSizes(files [][]byte, maxSize int) ([]int, error) {
+func dictSizes(files [][]byte, maxSize int) (sizes []int, dicts [2]int, err error) {
 	var halves [2][][]byte
 	for i, f := range files {
 		// The dictionary builder panics on very large samples, and a few KB of
 		// each file is what it learns shared phrases from anyway.
 		halves[i%2] = append(halves[i%2], f[:min(len(f), 64<<10)])
 	}
-	sizes := make([]int, len(files))
+	sizes = make([]int, len(files))
 	for test := range 2 {
 		train := halves[1-test]
 		d, err := dict.BuildZstdDict(train, dict.Options{
@@ -164,18 +167,19 @@ func dictSizes(files [][]byte, maxSize int) ([]int, error) {
 			ZstdLevel:  zstd.EncoderLevelFromZstd(19),
 		})
 		if err != nil {
-			return nil, fmt.Errorf("training a dictionary on %d files: %w", len(train), err)
+			return nil, dicts, fmt.Errorf("training a dictionary on %d files: %w", len(train), err)
 		}
+		dicts[test] = len(d)
 		enc, err := newZstd(d)
 		if err != nil {
-			return nil, err
+			return nil, dicts, err
 		}
 		for i := test; i < len(files); i += 2 {
 			sizes[i] = len(enc.EncodeAll(files[i], nil))
 		}
 		enc.Close()
 	}
-	return sizes, nil
+	return sizes, dicts, nil
 }
 
 // newZstd returns an encoder at zstd level 19, which klauspost/compress maps
