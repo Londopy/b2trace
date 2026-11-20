@@ -1,0 +1,46 @@
+Mid: 5Z7Q0467BOID
+Body: 323
+Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=ISO-8859-1
+Date: 2026/11/26 20:29
+File: 747 RMS_Express_Form_ICS213_Viewer.xml
+From: N0SHLB
+Mbo: N0SHLB
+Subject: ICS 213: Resource request 3
+To: N0EOCB
+Type: Private
+
+GENERAL MESSAGE (ICS 213)
+
+To: Operations Chief
+From: Supply Unit
+Subject: Resource request 3
+Date: 2026/11/26
+Time: 20:29
+Message: Shelter population now 24. Food on hand for 237 more meals.
+Approved Name: Supply Unit
+Approved Position: Section lead
+Incident: Winter storm exercise
+Location: Regional Hospital
+
+<?xml version="1.0" encoding="UTF-8"?>
+<RMS_Express_Form>
+  <form_parameters>
+    <xml_file_version>1.0</xml_file_version>
+    <display_form>ICS213_Viewer.html</display_form>
+    <reply_template>ICS213_Reply.txt</reply_template>
+  </form_parameters>
+  <variables>
+    <to>Operations Chief</to>
+    <from>Supply Unit</from>
+    <subject>Resource request 3</subject>
+    <date>2026/11/26</date>
+    <time>20:29</time>
+    <message>Shelter population now 24. Food on hand for 237 more meals.</message>
+    <approved_name>Supply Unit</approved_name>
+    <approved_position>Section lead</approved_position>
+    <incident>Winter storm exercise</incident>
+    <location>Regional Hospital</location>
+  </variables>
+</RMS_Express_Form>
+

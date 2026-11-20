@@ -1,0 +1,46 @@
+Mid: F98SS3JTBXX3
+Body: 318
+Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=ISO-8859-1
+Date: 2026/11/03 11:37
+File: 742 RMS_Express_Form_ICS213_Viewer.xml
+From: N0FLDB
+Mbo: N0FLDB
+Subject: ICS 213: Resource request 2
+To: N0SHLB
+Type: Private
+
+GENERAL MESSAGE (ICS 213)
+
+To: Supply Unit
+From: Medical Unit Leader
+Subject: Resource request 2
+Date: 2026/11/03
+Time: 11:37
+Message: Request a status update on the water plant pumps.
+Approved Name: Medical Unit Leader
+Approved Position: Section lead
+Incident: Winter storm exercise
+Location: Water Plant
+
+<?xml version="1.0" encoding="UTF-8"?>
+<RMS_Express_Form>
+  <form_parameters>
+    <xml_file_version>1.0</xml_file_version>
+    <display_form>ICS213_Viewer.html</display_form>
+    <reply_template>ICS213_Reply.txt</reply_template>
+  </form_parameters>
+  <variables>
+    <to>Supply Unit</to>
+    <from>Medical Unit Leader</from>
+    <subject>Resource request 2</subject>
+    <date>2026/11/03</date>
+    <time>11:37</time>
+    <message>Request a status update on the water plant pumps.</message>
+    <approved_name>Medical Unit Leader</approved_name>
+    <approved_position>Section lead</approved_position>
+    <incident>Winter storm exercise</incident>
+    <location>Water Plant</location>
+  </variables>
+</RMS_Express_Form>
+

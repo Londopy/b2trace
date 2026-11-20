@@ -1,0 +1,46 @@
+Mid: GDWLG6URESUK
+Body: 345
+Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=ISO-8859-1
+Date: 2026/11/14 05:50
+File: 769 RMS_Express_Form_ICS213_Viewer.xml
+From: N0RLYB
+Mbo: N0RLYB
+Subject: ICS 213: Resource request 13
+To: N0FLDC
+Type: Private
+
+GENERAL MESSAGE (ICS 213)
+
+To: Operations Chief
+From: Planning Section
+Subject: Resource request 13
+Date: 2026/11/14
+Time: 05:50
+Message: Request 20 additional cots and 40 blankets for overnight arrivals.
+Approved Name: Planning Section
+Approved Position: Section lead
+Incident: Winter storm exercise
+Location: Hilltop Repeater Site
+
+<?xml version="1.0" encoding="UTF-8"?>
+<RMS_Express_Form>
+  <form_parameters>
+    <xml_file_version>1.0</xml_file_version>
+    <display_form>ICS213_Viewer.html</display_form>
+    <reply_template>ICS213_Reply.txt</reply_template>
+  </form_parameters>
+  <variables>
+    <to>Operations Chief</to>
+    <from>Planning Section</from>
+    <subject>Resource request 13</subject>
+    <date>2026/11/14</date>
+    <time>05:50</time>
+    <message>Request 20 additional cots and 40 blankets for overnight arrivals.</message>
+    <approved_name>Planning Section</approved_name>
+    <approved_position>Section lead</approved_position>
+    <incident>Winter storm exercise</incident>
+    <location>Hilltop Repeater Site</location>
+  </variables>
+</RMS_Express_Form>
+

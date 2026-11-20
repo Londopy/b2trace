@@ -1,0 +1,46 @@
+Mid: 52PAFHSG2A5U
+Body: 327
+Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=ISO-8859-1
+Date: 2026/11/19 18:41
+File: 751 RMS_Express_Form_ICS213_Viewer.xml
+From: N0EOCB
+Mbo: N0EOCB
+Subject: ICS 213: Resource request 1
+To: N0SHLA
+Type: Private
+
+GENERAL MESSAGE (ICS 213)
+
+To: Logistics Chief
+From: Operations Chief
+Subject: Resource request 1
+Date: 2026/11/19
+Time: 18:41
+Message: Please send the updated contact list for all shelters.
+Approved Name: Operations Chief
+Approved Position: Section lead
+Incident: Winter storm exercise
+Location: Public Works Yard
+
+<?xml version="1.0" encoding="UTF-8"?>
+<RMS_Express_Form>
+  <form_parameters>
+    <xml_file_version>1.0</xml_file_version>
+    <display_form>ICS213_Viewer.html</display_form>
+    <reply_template>ICS213_Reply.txt</reply_template>
+  </form_parameters>
+  <variables>
+    <to>Logistics Chief</to>
+    <from>Operations Chief</from>
+    <subject>Resource request 1</subject>
+    <date>2026/11/19</date>
+    <time>18:41</time>
+    <message>Please send the updated contact list for all shelters.</message>
+    <approved_name>Operations Chief</approved_name>
+    <approved_position>Section lead</approved_position>
+    <incident>Winter storm exercise</incident>
+    <location>Public Works Yard</location>
+  </variables>
+</RMS_Express_Form>
+

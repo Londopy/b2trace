@@ -1,0 +1,46 @@
+Mid: 348Q9ZT964Z1
+Body: 337
+Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=ISO-8859-1
+Date: 2026/11/04 21:23
+File: 761 RMS_Express_Form_ICS213_Viewer.xml
+From: N0RLYA
+Mbo: N0RLYA
+Subject: ICS 213: Resource request 4
+To: N0EOCB
+Type: Private
+
+GENERAL MESSAGE (ICS 213)
+
+To: Radio Officer
+From: Public Works Liaison
+Subject: Resource request 4
+Date: 2026/11/04
+Time: 21:23
+Message: Please send the updated contact list for all shelters.
+Approved Name: Public Works Liaison
+Approved Position: Section lead
+Incident: Winter storm exercise
+Location: Hilltop Repeater Site
+
+<?xml version="1.0" encoding="UTF-8"?>
+<RMS_Express_Form>
+  <form_parameters>
+    <xml_file_version>1.0</xml_file_version>
+    <display_form>ICS213_Viewer.html</display_form>
+    <reply_template>ICS213_Reply.txt</reply_template>
+  </form_parameters>
+  <variables>
+    <to>Radio Officer</to>
+    <from>Public Works Liaison</from>
+    <subject>Resource request 4</subject>
+    <date>2026/11/04</date>
+    <time>21:23</time>
+    <message>Please send the updated contact list for all shelters.</message>
+    <approved_name>Public Works Liaison</approved_name>
+    <approved_position>Section lead</approved_position>
+    <incident>Winter storm exercise</incident>
+    <location>Hilltop Repeater Site</location>
+  </variables>
+</RMS_Express_Form>
+

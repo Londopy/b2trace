@@ -19,3 +19,10 @@ indent_size = 2
 [*.md]
 # Markdown uses trailing double-space for hard line breaks.
 trim_trailing_whitespace = false
+
+# Winlink messages measured byte for byte: CRLF, latin-1 bodies, exact sizes
+[corpus/*.b2f]
+charset = unset
+end_of_line = crlf
+insert_final_newline = false
+trim_trailing_whitespace = false

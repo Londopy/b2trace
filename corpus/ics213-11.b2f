@@ -1,0 +1,46 @@
+Mid: S3LU742H77RG
+Body: 320
+Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=ISO-8859-1
+Date: 2026/11/25 14:11
+File: 744 RMS_Express_Form_ICS213_Viewer.xml
+From: N0EOCB
+Mbo: N0EOCB
+Subject: ICS 213: Resource request 11
+To: N0SHLB
+Type: Private
+
+GENERAL MESSAGE (ICS 213)
+
+To: Medical Unit Leader
+From: EOC Director
+Subject: Resource request 11
+Date: 2026/11/25
+Time: 14:11
+Message: Confirm the road closure on Route 13 is still in effect.
+Approved Name: EOC Director
+Approved Position: Section lead
+Incident: Winter storm exercise
+Location: Water Plant
+
+<?xml version="1.0" encoding="UTF-8"?>
+<RMS_Express_Form>
+  <form_parameters>
+    <xml_file_version>1.0</xml_file_version>
+    <display_form>ICS213_Viewer.html</display_form>
+    <reply_template>ICS213_Reply.txt</reply_template>
+  </form_parameters>
+  <variables>
+    <to>Medical Unit Leader</to>
+    <from>EOC Director</from>
+    <subject>Resource request 11</subject>
+    <date>2026/11/25</date>
+    <time>14:11</time>
+    <message>Confirm the road closure on Route 13 is still in effect.</message>
+    <approved_name>EOC Director</approved_name>
+    <approved_position>Section lead</approved_position>
+    <incident>Winter storm exercise</incident>
+    <location>Water Plant</location>
+  </variables>
+</RMS_Express_Form>
+

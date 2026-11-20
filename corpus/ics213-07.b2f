@@ -1,0 +1,46 @@
+Mid: WJAU5I8O4I6S
+Body: 306
+Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=ISO-8859-1
+Date: 2026/11/18 09:09
+File: 730 RMS_Express_Form_ICS213_Viewer.xml
+From: N0HOSP
+Mbo: N0HOSP
+Subject: ICS 213: Resource request 7
+To: N0RLYA
+Type: Private
+
+GENERAL MESSAGE (ICS 213)
+
+To: Net Control
+From: Supply Unit
+Subject: Resource request 7
+Date: 2026/11/18
+Time: 09:09
+Message: Please send the updated contact list for all shelters.
+Approved Name: Supply Unit
+Approved Position: Section lead
+Incident: Winter storm exercise
+Location: County EOC
+
+<?xml version="1.0" encoding="UTF-8"?>
+<RMS_Express_Form>
+  <form_parameters>
+    <xml_file_version>1.0</xml_file_version>
+    <display_form>ICS213_Viewer.html</display_form>
+    <reply_template>ICS213_Reply.txt</reply_template>
+  </form_parameters>
+  <variables>
+    <to>Net Control</to>
+    <from>Supply Unit</from>
+    <subject>Resource request 7</subject>
+    <date>2026/11/18</date>
+    <time>09:09</time>
+    <message>Please send the updated contact list for all shelters.</message>
+    <approved_name>Supply Unit</approved_name>
+    <approved_position>Section lead</approved_position>
+    <incident>Winter storm exercise</incident>
+    <location>County EOC</location>
+  </variables>
+</RMS_Express_Form>
+

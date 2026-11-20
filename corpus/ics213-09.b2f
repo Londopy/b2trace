@@ -1,0 +1,46 @@
+Mid: KJ7N1V3OE9ZC
+Body: 321
+Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=ISO-8859-1
+Date: 2026/11/19 21:06
+File: 745 RMS_Express_Form_ICS213_Viewer.xml
+From: N0HOSP
+Mbo: N0HOSP
+Subject: ICS 213: Resource request 9
+To: N0SHLA
+Type: Private
+
+GENERAL MESSAGE (ICS 213)
+
+To: Medical Unit Leader
+From: Radio Officer
+Subject: Resource request 9
+Date: 2026/11/19
+Time: 21:06
+Message: Confirm the road closure on Route 60 is still in effect.
+Approved Name: Radio Officer
+Approved Position: Section lead
+Incident: Winter storm exercise
+Location: Water Plant
+
+<?xml version="1.0" encoding="UTF-8"?>
+<RMS_Express_Form>
+  <form_parameters>
+    <xml_file_version>1.0</xml_file_version>
+    <display_form>ICS213_Viewer.html</display_form>
+    <reply_template>ICS213_Reply.txt</reply_template>
+  </form_parameters>
+  <variables>
+    <to>Medical Unit Leader</to>
+    <from>Radio Officer</from>
+    <subject>Resource request 9</subject>
+    <date>2026/11/19</date>
+    <time>21:06</time>
+    <message>Confirm the road closure on Route 60 is still in effect.</message>
+    <approved_name>Radio Officer</approved_name>
+    <approved_position>Section lead</approved_position>
+    <incident>Winter storm exercise</incident>
+    <location>Water Plant</location>
+  </variables>
+</RMS_Express_Form>
+

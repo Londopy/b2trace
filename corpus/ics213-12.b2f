@@ -1,0 +1,46 @@
+Mid: LBWKW98NHR9N
+Body: 325
+Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=ISO-8859-1
+Date: 2026/11/26 22:52
+File: 749 RMS_Express_Form_ICS213_Viewer.xml
+From: N0FLDB
+Mbo: N0FLDB
+Subject: ICS 213: Resource request 12
+To: N0RLYB
+Type: Private
+
+GENERAL MESSAGE (ICS 213)
+
+To: Radio Officer
+From: Logistics Chief
+Subject: Resource request 12
+Date: 2026/11/26
+Time: 22:52
+Message: Shelter population now 52. Food on hand for 228 more meals.
+Approved Name: Logistics Chief
+Approved Position: Section lead
+Incident: Winter storm exercise
+Location: North Shelter
+
+<?xml version="1.0" encoding="UTF-8"?>
+<RMS_Express_Form>
+  <form_parameters>
+    <xml_file_version>1.0</xml_file_version>
+    <display_form>ICS213_Viewer.html</display_form>
+    <reply_template>ICS213_Reply.txt</reply_template>
+  </form_parameters>
+  <variables>
+    <to>Radio Officer</to>
+    <from>Logistics Chief</from>
+    <subject>Resource request 12</subject>
+    <date>2026/11/26</date>
+    <time>22:52</time>
+    <message>Shelter population now 52. Food on hand for 228 more meals.</message>
+    <approved_name>Logistics Chief</approved_name>
+    <approved_position>Section lead</approved_position>
+    <incident>Winter storm exercise</incident>
+    <location>North Shelter</location>
+  </variables>
+</RMS_Express_Form>
+

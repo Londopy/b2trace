@@ -1,0 +1,46 @@
+Mid: PBTHG9WU3CZU
+Body: 336
+Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=ISO-8859-1
+Date: 2026/11/02 03:17
+File: 760 RMS_Express_Form_ICS213_Viewer.xml
+From: N0FLDC
+Mbo: N0FLDC
+Subject: ICS 213: Resource request 14
+To: N0RLYB
+Type: Private
+
+GENERAL MESSAGE (ICS 213)
+
+To: Public Works Liaison
+From: Shelter Manager
+Subject: Resource request 14
+Date: 2026/11/02
+Time: 03:17
+Message: Request 20 additional cots and 40 blankets for overnight arrivals.
+Approved Name: Shelter Manager
+Approved Position: Section lead
+Incident: Winter storm exercise
+Location: County EOC
+
+<?xml version="1.0" encoding="UTF-8"?>
+<RMS_Express_Form>
+  <form_parameters>
+    <xml_file_version>1.0</xml_file_version>
+    <display_form>ICS213_Viewer.html</display_form>
+    <reply_template>ICS213_Reply.txt</reply_template>
+  </form_parameters>
+  <variables>
+    <to>Public Works Liaison</to>
+    <from>Shelter Manager</from>
+    <subject>Resource request 14</subject>
+    <date>2026/11/02</date>
+    <time>03:17</time>
+    <message>Request 20 additional cots and 40 blankets for overnight arrivals.</message>
+    <approved_name>Shelter Manager</approved_name>
+    <approved_position>Section lead</approved_position>
+    <incident>Winter storm exercise</incident>
+    <location>County EOC</location>
+  </variables>
+</RMS_Express_Form>
+

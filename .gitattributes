@@ -9,6 +9,8 @@
 # LF-only .cmd/.bat files, so they check out with CRLF
 *.cmd text eol=crlf
 *.bat text eol=crlf
+# B2F messages end their lines in CRLF, and the corpus is measured byte for byte
+corpus/*.b2f -text
 
 # Binary assets
 *.png binary
