@@ -7,6 +7,8 @@ what appears on its GitHub release page.
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-11-19
+
 ### Added
 
 - `b2trace proxy`: a passive TCP proxy between Pat and a VARA or ARDOP modem that writes one
@@ -17,4 +19,5 @@ what appears on its GitHub release page.
   cross-validated dictionary, on Winlink message files.
 - `b2trace version`.
 
-[Unreleased]: https://github.com/Londopy/b2trace/commits/main
+[Unreleased]: https://github.com/Londopy/b2trace/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/Londopy/b2trace/releases/tag/v0.1.0
