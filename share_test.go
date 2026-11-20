@@ -203,3 +203,41 @@ func TestParseProposal(t *testing.T) {
 		}
 	}
 }
+
+// The cells come from the numbers in wantSummary: turnarounds 5 and 2, gap
+// 2.50 s, reply time 0.67 s and 2.00 s, connect 5.0 s, and the payload shares
+// of time and of bytes.
+func TestResultsTable(t *testing.T) {
+	sessions, err := readSessions("testdata/sessions.jsonl")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var shared bytes.Buffer
+	if err := writeShared(&shared, sessions); err != nil {
+		t.Fatal(err)
+	}
+	path := filepath.Join(t.TempDir(), "shared.jsonl")
+	if err := os.WriteFile(path, shared.Bytes(), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	var got bytes.Buffer
+	if err := runResults([]string{path}, &got); err != nil {
+		t.Fatal(err)
+	}
+	want := "| Link | Sessions | Messages | Turnarounds (median) | Gap (mean) | Reply time (mean) | Connect (median) | Payload share of time | Payload share of bytes |\n" +
+		"|---|---|---|---|---|---|---|---|---|\n" +
+		"| ardop | 1 | 1 | 2 | - | 2.00 s | - | 66.3% | 63.9% |\n" +
+		"| varahf | 1 | 1 | 5 | 2.50 s | 0.67 s | 5.0 s | 91.0% | 81.8% |\n"
+	if got.String() != want {
+		t.Errorf("got:\n%s\nwant:\n%s", got.String(), want)
+	}
+}
+
+// A session that never got to B2F has no turns, so there is nothing to average.
+func TestResultRowNoTurns(t *testing.T) {
+	got := resultRow("vara", []session{{Modem: "vara"}})
+	want := "| vara | 1 | 0 | 0 | - | - | - | - | - |"
+	if got != want {
+		t.Errorf("got %q, want %q", got, want)
+	}
+}

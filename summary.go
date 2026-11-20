@@ -138,9 +138,12 @@ type stats struct {
 	turnarounds int
 	gaps        int
 	gapMs       int64
-	ptt         int
-	localTXMs   int64
-	stalls      int
+	// how long Pat took to answer, see replyTimes
+	replies   int
+	replyMs   float64
+	ptt       int
+	localTXMs int64
+	stalls    int
 	// false when no session came from a modem with BUFFER reports
 	retryInfo bool
 	msgsOut   int
@@ -254,6 +257,10 @@ func sessionStats(s session) stats {
 	for _, g := range s.GapMs {
 		st.gapMs += g
 	}
+	for _, d := range replyTimes(s) {
+		st.replies++
+		st.replyMs += d
+	}
 	for _, m := range s.Messages {
 		if m.Dir == outbound {
 			st.msgsOut++
@@ -313,6 +320,8 @@ func (a stats) plus(b stats) stats {
 	a.turnarounds += b.turnarounds
 	a.gaps += b.gaps
 	a.gapMs += b.gapMs
+	a.replies += b.replies
+	a.replyMs += b.replyMs
 	a.ptt += b.ptt
 	a.localTXMs += b.localTXMs
 	a.stalls += b.stalls
@@ -352,6 +361,7 @@ func (st stats) print(w io.Writer) {
 	fmt.Fprintf(w, "%-17s %.1f s\n", "local TX", float64(st.localTXMs)/1000)
 	fmt.Fprintf(w, "%-17s %d\n", "gaps", st.gaps)
 	fmt.Fprintf(w, "%-17s %s\n", "mean gap", st.meanGap())
+	fmt.Fprintf(w, "%-17s %s\n", "reply time", st.meanReply())
 	if st.retryInfo {
 		fmt.Fprintf(w, "%-17s %d (BUFFER non-zero and unchanged for 2+ samples)\n", "possible retries", st.stalls)
 	} else {
@@ -392,6 +402,28 @@ func (pt phaseTimes) total() float64 {
 		t += p
 	}
 	return t
+}
+
+// replyTimes lists, in milliseconds, how long Pat took to answer each remote
+// turn: from the remote's last byte reaching Pat to Pat's first byte of the
+// next turn, both as they passed the proxy. The modem's decoding before and
+// its keying after are not in it.
+func replyTimes(s session) []float64 {
+	var d []float64
+	for i := 1; i < len(s.Turns); i++ {
+		prev, next := s.Turns[i-1], s.Turns[i]
+		if prev.Dir == inbound && next.Dir == outbound {
+			d = append(d, ms(next.FirstByte.Sub(prev.LastByte)))
+		}
+	}
+	return d
+}
+
+func (st stats) meanReply() string {
+	if st.replies == 0 {
+		return "-"
+	}
+	return fmt.Sprintf("%.2f s (mean, remote's last byte to your next byte)", st.replyMs/float64(st.replies)/1000)
 }
 
 func (st stats) meanGap() string {

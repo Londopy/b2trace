@@ -35,6 +35,7 @@ PTT intervals     3
 local TX          12.3 s
 gaps              2
 mean gap          2.50 s (estimate: local PTT off to next PTT on)
+reply time        0.67 s (mean, remote's last byte to your next byte)
 possible retries  2 (BUFFER non-zero and unchanged for 2+ samples)
 proposals out     1 (FC 1): 1 accepted
 proposals in      0
@@ -68,6 +69,7 @@ PTT intervals     0
 local TX          0.0 s
 gaps              0
 mean gap          -
+reply time        2.00 s (mean, remote's last byte to your next byte)
 possible retries  0 (BUFFER non-zero and unchanged for 2+ samples)
 proposals out     0
 proposals in      1 (FC 1): 1 not answered
@@ -101,6 +103,7 @@ PTT intervals     3
 local TX          12.3 s
 gaps              2
 mean gap          2.50 s (estimate: local PTT off to next PTT on)
+reply time        1.00 s (mean, remote's last byte to your next byte)
 possible retries  2 (BUFFER non-zero and unchanged for 2+ samples)
 proposals out     1 (FC 1): 1 accepted
 proposals in      1 (FC 1): 1 not answered

@@ -32,8 +32,8 @@ func runResults(args []string, w io.Writer) error {
 			groups[key] = append(groups[key], s)
 		}
 	}
-	fmt.Fprintln(w, "| Link | Sessions | Messages | Turnarounds (median) | Gap (mean) | Connect (median) | Payload share of time | Payload share of bytes |")
-	fmt.Fprintln(w, "|---|---|---|---|---|---|---|---|")
+	fmt.Fprintln(w, "| Link | Sessions | Messages | Turnarounds (median) | Gap (mean) | Reply time (mean) | Connect (median) | Payload share of time | Payload share of bytes |")
+	fmt.Fprintln(w, "|---|---|---|---|---|---|---|---|---|")
 	keys := make([]string, 0, len(groups))
 	for k := range groups {
 		keys = append(keys, k)
@@ -59,12 +59,16 @@ func resultRow(link string, sessions []session) string {
 	if all.gaps > 0 {
 		gap = fmt.Sprintf("%.2f s", float64(all.gapMs)/float64(all.gaps)/1000)
 	}
+	reply := "-"
+	if all.replies > 0 {
+		reply = fmt.Sprintf("%.2f s", all.replyMs/float64(all.replies)/1000)
+	}
 	connect := "-"
 	if len(connects) > 0 {
 		connect = fmt.Sprintf("%.1f s", median(connects)/1000)
 	}
 	bytes := all.out.total() + all.in.total()
-	return fmt.Sprintf("| %s | %d | %d | %g | %s | %s | %s | %s |", link, len(sessions), all.msgsOut+all.msgsIn,
-		median(turnarounds), gap, connect, shareF(all.time.phase[phasePayload], all.time.total()),
+	return fmt.Sprintf("| %s | %d | %d | %g | %s | %s | %s | %s | %s |", link, len(sessions), all.msgsOut+all.msgsIn,
+		median(turnarounds), gap, reply, connect, shareF(all.time.phase[phasePayload], all.time.total()),
 		share(all.out.Payload+all.in.Payload, bytes))
 }
