@@ -41,7 +41,7 @@ APP = "b2trace"
 REPO = "Londopy/b2trace"
 INTRO = (
     "**b2trace** measures where airtime goes in Winlink B2F sessions, by sitting between Pat and a VARA or "
-    "ARDOP modem. See the [README](https://github.com/{repo}#readme) for setup."
+    "ARDOP modem or a packet TNC. See the [README](https://github.com/{repo}#readme) for setup."
 )
 
 # (regex on the file name, who it's for, notes). first match wins.
