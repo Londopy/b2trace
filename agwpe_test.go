@@ -207,4 +207,11 @@ func TestProxyAGWPE(t *testing.T) {
 		t.Errorf("commands %q, want %q", got, want)
 	}
 
+	var sum bytes.Buffer
+	if err := runSummary([]string{logPath}, &sum); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(sum.String(), "possible retries  - (AGWPE does not report them)") {
+		t.Errorf("summary claims a retry count for AGWPE:\n%s", sum.String())
+	}
 }

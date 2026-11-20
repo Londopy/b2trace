@@ -11,7 +11,7 @@ const usage = `b2trace measures where airtime goes in Winlink B2F sessions.
 
 Usage:
   b2trace proxy --modem vara|ardop|agwpe --target host:port [--listen host:port] [--log sessions.jsonl] [--link label]
-  b2trace summary sessions.jsonl
+  b2trace summary sessions.jsonl...
   b2trace compress [--dict-size 16384] [--csv] <file or dir>...
   b2trace version
 
