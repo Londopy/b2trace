@@ -7,6 +7,11 @@ what appears on its GitHub release page.
 
 ## [Unreleased]
 
+### Changed
+
+- The README shows the terminal UI in a GIF and two screenshots, recorded with real Pat over a
+  stand-in modem, and has a quick start, more badges and fold-outs for the reference parts.
+
 ## [0.4.0] - 2026-11-23
 
 ### Added
