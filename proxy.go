@@ -23,6 +23,7 @@ func runProxy(args []string) error {
 	target := flags.String("target", "", "address the modem was moved to")
 	logPath := flags.String("log", "sessions.jsonl", "file that gets one JSON line per session")
 	link := flags.String("link", "", "label kept with each session to group results by, such as varahf, varafm or packet1200")
+	ui := flags.Bool("ui", false, "show the session live in a terminal UI, with the log browser and compress")
 	flags.Parse(args)
 	if flags.NArg() > 0 {
 		return fmt.Errorf("unexpected argument %q; proxy only takes flags", flags.Arg(0))
@@ -52,26 +53,37 @@ func runProxy(args []string) error {
 	defer f.Close()
 
 	logger := log.New(os.Stderr, "", log.LstdFlags|log.Lmicroseconds)
+	var logs *lineLog
+	if *ui {
+		// the log pane is narrow; sessions.jsonl keeps full timestamps
+		logs = newLineLog(200)
+		logger = log.New(logs, "", log.Ltime|log.Lmicroseconds)
+	}
 	p, err := newProxy(*modem, *link, *target, logger, appendSession(f))
 	if err != nil {
 		return err
 	}
 	var cmdLn, dataLn net.Listener
+	var relaying string
 	if p.modem == "agwpe" {
 		if cmdLn, err = net.Listen("tcp", *listen); err != nil {
 			return fmt.Errorf("cannot listen on %s (is the TNC still using it?): %w", *listen, err)
 		}
-		logger.Printf("relaying AGWPE on %s to %s, sessions go to %s", cmdLn.Addr(), p.cmdTarget, *logPath)
+		relaying = fmt.Sprintf("relaying AGWPE on %s to %s, sessions go to %s", cmdLn.Addr(), p.cmdTarget, *logPath)
 	} else {
 		if cmdLn, dataLn, err = listenPair(*listen); err != nil {
 			return err
 		}
-		logger.Printf("relaying %s on %s and %s to %s and %s, sessions go to %s",
+		relaying = fmt.Sprintf("relaying %s on %s and %s to %s and %s, sessions go to %s",
 			p.name, cmdLn.Addr(), dataLn.Addr(), p.cmdTarget, p.dataTarget, *logPath)
 	}
+	logger.Print(relaying)
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()
+	if *ui {
+		return runLive(ctx, p, cmdLn, dataLn, *logPath, logs, relaying)
+	}
 	return p.serve(ctx, cmdLn, dataLn)
 }
 

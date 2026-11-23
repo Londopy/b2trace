@@ -11,6 +11,8 @@ const usage = `b2trace measures where airtime goes in Winlink B2F sessions.
 
 Usage:
   b2trace proxy --modem vara|ardop|agwpe --target host:port [--listen host:port] [--log sessions.jsonl] [--link label]
+  b2trace proxy ... --ui
+  b2trace ui [sessions.jsonl]
   b2trace summary sessions.jsonl...
   b2trace share [-o shared.jsonl] sessions.jsonl...
   b2trace results shared.jsonl...
@@ -32,6 +34,8 @@ func main() {
 	switch cmd, args := os.Args[1], os.Args[2:]; cmd {
 	case "proxy":
 		err = runProxy(args)
+	case "ui":
+		err = runUI(args)
 	case "summary":
 		err = runSummary(args, os.Stdout)
 	case "share":

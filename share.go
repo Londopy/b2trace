@@ -24,7 +24,11 @@ func runShare(args []string, stdout io.Writer) error {
 	if *out == "" {
 		return writeShared(stdout, sessions)
 	}
-	f, err := os.Create(*out)
+	return createShared(*out, sessions)
+}
+
+func createShared(path string, sessions []session) error {
+	f, err := os.Create(path)
 	if err != nil {
 		return err
 	}
