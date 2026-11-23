@@ -134,6 +134,47 @@ the frame counts Pat polls for several times a second). It appends a session to
 when a connection to the modem closes, or when you stop the proxy with Ctrl+C. If the modem is
 not running, the proxy closes Pat's connection and prints the address it could not reach.
 
+### Watch sessions in the terminal UI
+
+Add `--ui` to the proxy command to watch each session as it happens:
+
+```
+b2trace proxy --modem vara --target 127.0.0.1:18300 --ui
+```
+
+The UI has three views. `tab` and `shift+tab` move between them, and in Live and Sessions `1`,
+`2` and `3` jump to one and `q` quits. `ctrl+c` quits from anywhere. With `--ui`, quitting
+also stops the proxy, so while a session is in progress the UI asks first: press `q` or
+`ctrl+c` again to stop it, or any other key to carry on.
+
+- **Live:** whether a station is connected and for how long, whether your PTT is keyed (AGWPE
+  does not report it), which B2F phase the bytes now passing belong to and which side is
+  sending, the turns and messages so far, and the byte and time tables of the session in
+  progress, then as much of the proxy's log as fits. In the time table, `idle` is the time
+  since the last byte. A window too narrow for both tables side by side (about 108 columns)
+  shows one at a time; `t` switches between them.
+- **Sessions:** the sessions in the log, newest selected first, with the full summary of the
+  one you pick. `up` and `down` (or `j` and `k`, `g` and `G`) pick a session, and `pgup`,
+  `pgdn` and `space` scroll its summary. `s` writes a shared copy of the log, the same as
+  `b2trace share`, to a file you choose; it will not write over the log itself, and asks
+  before replacing another file. `r` reads the log again.
+- **Compress:** type or paste a file or folder and press `enter` to run `b2trace compress` on
+  it. The totals show at the top and the row for each file scrolls below with `pgup` and
+  `pgdn`; `esc` clears the path.
+
+To browse a log and run compress without the proxy:
+
+```
+b2trace ui sessions.jsonl
+```
+
+The colours follow your terminal's light or dark background when it reports one, and use
+middle tones that read on either when it does not. Text keeps your terminal's own colour,
+every state is also written in words, and `NO_COLOR` turns colour off. The UI is built with
+[Bubble Tea](https://github.com/charmbracelet/bubbletea),
+[Bubbles](https://github.com/charmbracelet/bubbles) and
+[Lip Gloss](https://github.com/charmbracelet/lipgloss).
+
 ### Read the results
 
 ```
@@ -239,6 +280,21 @@ to `results/`. Your logs never leave your machine unless you do this. (Use `-o` 
 label. It only reads files made by `share`. Patterns like `*.jsonl` work in PowerShell and cmd
 too, which leave them to the program.
 
+## What has been run against what
+
+- **Real Pat:** at both ends of sessions through stand-in VARA and AGWPE links, with plain
+  B2F and with the proposed Z extension, through `b2trace proxy` with and without `--ui`.
+- **Real Direwolf 1.8.1:** Pat registering, dialing a station that did not answer, and
+  Direwolf giving up, through the AGWPE proxy. A full session through Direwolf has not been
+  run.
+- **VARA HF and FM:** never against the real VARA program. The VARA side was tested with
+  command and data traffic written in the tests and with a stand-in modem that answers Pat the way the
+  VARA TCP interface does.
+- **ARDOP:** never against a real ARDOP TNC such as ardopcf. The ARDOP framing was tested
+  only with frames the tests build from the documented layout.
+- **On the air:** nothing yet. The numbers in this repository come from test data and
+  stand-in links, not real ones; real numbers belong in [RESULTS.md](RESULTS.md).
+
 ## What one side can and cannot measure
 
 b2trace sees only your end of the link.
@@ -337,6 +393,8 @@ go test ./...
 
 ```
 main.go       command dispatch and usage
+tui.go        b2trace ui and proxy --ui
+live.go       snapshots of the session in progress for the UI
 proxy.go      listeners, relaying, command-port lines
 agwpe.go      AGWPE framing
 ardop.go      ARDOP data-port framing

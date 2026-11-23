@@ -7,7 +7,10 @@ How much smaller Winlink messages get with other compressors than B2F's LZHUF, m
 
 74 complete Winlink messages, headers and attachments included, since B2F compresses the
 whole message. Each file is byte for byte what wl2k-go, the library Pat uses, writes for that
-message. Everything was written for this repository by
+message, and a test checks that wl2k-go reads every file and writes the same bytes back.
+Another test checks the byte totals below against the corpus, so they cannot fall out of
+date; the percentages and the other rows are not checked.
+Everything was written for this repository by
 [`scripts/make_corpus.py`](scripts/make_corpus.py), so there is no question of rights to use
 it. Callsigns are N0 calls with four-letter suffixes, which are never issued, and names are
 roles, not people.

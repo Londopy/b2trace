@@ -7,6 +7,21 @@ what appears on its GitHub release page.
 
 ## [Unreleased]
 
+### Added
+
+- A terminal UI. `b2trace proxy --ui` shows the session in progress: connection, PTT, the
+  current B2F phase and direction, turns, the byte and time tables, and the proxy's log.
+  `b2trace ui` browses a session log with the full summary of each session, writes a shared
+  copy, and runs compress. It follows the terminal's light or dark background.
+- Tests that every corpus message is exactly what wl2k-go writes for it, and that the totals
+  in COMPRESSION.md are what `b2trace compress` gives on the corpus.
+- The README says what has and has not been run against real modems and TNCs.
+
+### Changed
+
+- `b2trace compress` uses one zstd encoder instead of one per CPU core. The results are the
+  same, and on a 24-core machine it needs about a fifth of the memory.
+
 ## [0.3.0] - 2026-11-19
 
 ### Added
