@@ -7,6 +7,8 @@ what appears on its GitHub release page.
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-11-23
+
 ### Added
 
 - A terminal UI. `b2trace proxy --ui` shows the session in progress: connection, PTT, the
@@ -76,7 +78,8 @@ what appears on its GitHub release page.
   cross-validated dictionary, on Winlink message files.
 - `b2trace version`.
 
-[Unreleased]: https://github.com/Londopy/b2trace/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/Londopy/b2trace/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/Londopy/b2trace/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/Londopy/b2trace/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/Londopy/b2trace/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/Londopy/b2trace/releases/tag/v0.1.0
