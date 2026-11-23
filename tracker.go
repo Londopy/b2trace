@@ -36,6 +36,10 @@ type tracker struct {
 	owner int
 	// command lines since the last session, kept for the next one
 	before []pendingLine
+
+	saved     int
+	lastSaved *session
+	saveErr   error
 }
 
 type pendingLine struct {
@@ -340,8 +344,11 @@ func (t *tracker) finish() {
 	s := &r.s
 	if err := t.save(s); err != nil {
 		t.log.Printf("cannot write session: %v", err)
+		t.saveErr = err
 		return
 	}
+	t.saved++
+	t.lastSaved, t.saveErr = s, nil
 	t.log.Printf("session ended (%s): remote %s, bytes out %d, bytes in %d, turns %d, local TX %.1f s",
 		s.EndReason, cmp.Or(s.RemoteCall, "unknown"), s.BytesOut.total(), s.BytesIn.total(),
 		s.TurnCount, float64(s.LocalTXMs)/1000)
@@ -359,6 +366,11 @@ type recorder struct {
 	// ended is set at DISCONNECTED. Late data is still added after that, but
 	// command-port events are not.
 	ended bool
+
+	// the phase and direction of the last B2F bytes, for the live view
+	lastPhase phase
+	lastDir   direction
+	sawData   bool
 }
 
 func newRecorder(modem string, now time.Time, line string) *recorder {
@@ -399,6 +411,9 @@ func (r *recorder) add(dir direction, tn *turn, now time.Time, els []element) {
 	for _, e := range els {
 		tn.Bytes.add(e.phase, e.bytes)
 		total.add(e.phase, e.bytes)
+		if e.bytes > 0 {
+			r.lastPhase, r.lastDir, r.sawData = e.phase, dir, true
+		}
 		if e.msg != nil {
 			m := *e.msg
 			m.Dir = dir
