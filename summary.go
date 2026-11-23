@@ -29,22 +29,28 @@ func runSummary(args []string, w io.Writer) error {
 	}
 	var all stats
 	for i, s := range sessions {
-		st := sessionStats(s)
-		fmt.Fprintf(w, "session %d: %s\n", i+1, describe(s, st))
-		if s.SIDOut != "" {
-			fmt.Fprintf(w, "sid out %s\n", s.SIDOut)
-		}
-		if s.SIDIn != "" {
-			fmt.Fprintf(w, "sid in  %s\n", s.SIDIn)
-		}
+		all = all.plus(printSession(w, fmt.Sprintf("session %d", i+1), s))
 		fmt.Fprintln(w)
-		st.print(w)
-		fmt.Fprintln(w)
-		all = all.plus(st)
 	}
 	fmt.Fprintf(w, "total: %d sessions, %s\n\n", len(sessions), all.duration.Round(100*time.Millisecond))
 	all.print(w)
 	return nil
+}
+
+// printSession writes one session the way summary shows it, under the given
+// name, and returns its stats.
+func printSession(w io.Writer, name string, s session) stats {
+	st := sessionStats(s)
+	fmt.Fprintf(w, "%s: %s\n", name, describe(s, st))
+	if s.SIDOut != "" {
+		fmt.Fprintf(w, "sid out %s\n", s.SIDOut)
+	}
+	if s.SIDIn != "" {
+		fmt.Fprintf(w, "sid in  %s\n", s.SIDIn)
+	}
+	fmt.Fprintln(w)
+	st.print(w)
+	return st
 }
 
 func readAll(args []string) ([]session, error) {
@@ -335,6 +341,14 @@ func (a stats) plus(b stats) stats {
 }
 
 func (st stats) print(w io.Writer) {
+	st.printBytes(w)
+	fmt.Fprintln(w)
+	st.time.print(w, "disconnect")
+	fmt.Fprintln(w)
+	st.printCounts(w)
+}
+
+func (st stats) printBytes(w io.Writer) {
 	o, i := st.out, st.in
 	rows := []struct {
 		name    string
@@ -352,9 +366,9 @@ func (st stats) print(w io.Writer) {
 	for _, r := range rows {
 		fmt.Fprintf(w, "%-12s %9d %9d %9d %7s\n", r.name, r.out, r.in, r.out+r.in, share(r.out+r.in, all))
 	}
-	fmt.Fprintln(w)
-	st.time.print(w)
-	fmt.Fprintln(w)
+}
+
+func (st stats) printCounts(w io.Writer) {
 	fmt.Fprintf(w, "%-17s %d\n", "turns", st.turns)
 	fmt.Fprintf(w, "%-17s %d\n", "turnarounds", st.turnarounds)
 	fmt.Fprintf(w, "%-17s %d\n", "PTT intervals", st.ptt)
@@ -373,7 +387,8 @@ func (st stats) print(w io.Writer) {
 	fmt.Fprintf(w, "%-17s %d\n", "errors", st.errors)
 }
 
-func (pt phaseTimes) print(w io.Writer) {
+// print writes the time table. last names the time after the last byte.
+func (pt phaseTimes) print(w io.Writer, last string) {
 	p := pt.phase
 	rows := []struct {
 		name string
@@ -386,7 +401,7 @@ func (pt phaseTimes) print(w io.Writer) {
 		{"payload", p[phasePayload]},
 		{"answers/end", p[phaseAnswer] + p[phaseEnd]},
 		{"other", p[phaseError] + p[phaseOther]},
-		{"disconnect", pt.disconnect},
+		{last, pt.disconnect},
 	}
 	total := pt.total()
 	fmt.Fprintf(w, "%-12s %9s %7s  (estimate, see README)\n", "time", "seconds", "share")
