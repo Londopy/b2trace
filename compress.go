@@ -183,9 +183,10 @@ func dictSizes(files [][]byte, maxSize int) (sizes []int, dicts [2]int, err erro
 }
 
 // newZstd returns an encoder at zstd level 19, which klauspost/compress maps
-// to its best level.
+// to its best level. One encoder is enough for EncodeAll from one goroutine;
+// the default of one per core costs over a gigabyte at this level.
 func newZstd(d []byte) (*zstd.Encoder, error) {
-	opts := []zstd.EOption{zstd.WithEncoderLevel(zstd.EncoderLevelFromZstd(19))}
+	opts := []zstd.EOption{zstd.WithEncoderLevel(zstd.EncoderLevelFromZstd(19)), zstd.WithEncoderConcurrency(1)}
 	if d != nil {
 		opts = append(opts, zstd.WithEncoderDict(d))
 	}
